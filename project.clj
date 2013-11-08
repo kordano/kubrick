@@ -17,7 +17,7 @@
                  [enlive "1.1.1"]
                  [prismatic/dommy "0.1.1"]
                  [hiccups "0.2.0"]
-                 [aleph "0.3.0"]
+                 [http-kit "2.1.12"]
                  ]
   :profiles {:dev {:repl-options {:init-ns kubrick.server}
                    :plugins [[lein-cljsbuild "0.3.2"]
