@@ -50,7 +50,7 @@
          ["onmessage" (fn [m]
                         (let [data (.-data m)]
                           (do
-                            (log (str "receive channel data: " (str data)))
+                            (log (str "receive channel data: " (apply str data)))
                             (receive-data data))))]]))
   (set! (.-onclick (sel1 :#kill-ws)) (fn []
                                  (.close @websocket*)
