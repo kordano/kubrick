@@ -78,7 +78,7 @@
           (fn [] (let [title (dom/value (sel1 :#title-input))
                       year (dom/value (sel1 :#year-input))
                       rating (dom/value (sel1 :#rating-input))
-                      data {:title title :year year :rating rating}
+                      data {:type "insertion" :data {:movie {:title title :year year :rating rating}}}
                       body (sel1 :body)]
                   (go
                     (log (str "push to channel: " (str data)))
