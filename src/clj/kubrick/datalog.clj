@@ -22,18 +22,15 @@
 
 (defn init-datalog-dbs []
   "Create datalog databases if not available"
-  (map get-database ["datalog-users" "datalog-movies"]))
+  (map get-database ["datalog-users" "movies"]))
 
-
-(defn get-couchdb-entries []
-  (let [users (get-all-documents "datalog-users")
-        movies (get-all-documents "datalog-movies")]
-    {:users users
-     :movies movies}))
-
+(defn get-couchdb-entries [db]
+  (let [raw-entries (get-all-documents db)
+        entries (map #(dissoc % :_id :_rev) raw-entries)]
+    {(keyword db) entries}))
 
 (defn generate-id []
-  (let [ids (map #(:id %) (get-all-documents "datalog-movies"))]
+  (let [ids (map #(:id %) (get-all-documents "movies"))]
     (if-not (empty? ids)
       (inc (apply max ids))
       0)))
@@ -41,7 +38,7 @@
 
 (defn write-to-local-db [db]
   "write all relations to db"
-  (let [movies (map #(put-document "datalog-movies" %) (:data (get-relation db :movie)))]
+  (let [movies (map #(put-document "movies" %) (:data (get-relation db :movie)))]
     (count movies)))
 
 
@@ -85,4 +82,4 @@
       (write-to-local-db
        (db
         (apply vector :movie :id (generate-id) movie)))
-      (get-all-documents "datalog-movies"))))
+      (get-couchdb-entries "movies"))))
