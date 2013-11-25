@@ -14,7 +14,7 @@
 
 (defn destructure-request [{type :type data :data}]
   (cond
-   (= type "query") (db/get-couchdb-entries)
+   (= type "query") (db/get-couchdb-entries "movies")
    (= type "insertion") (db/put! data)
    :else "WRONG REQUEST"))
 
@@ -33,7 +33,6 @@
   (defonce ^:private ws-server
     (run-server handler {:port 9090}))
   ws-server)
-
 
 
                                         ; ring server
@@ -55,5 +54,7 @@
   server)
 
 
-#_(run-ws)
-#_(run)
+(defn start []
+  (do
+    (run)
+    (run-ws)))
