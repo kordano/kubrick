@@ -20,8 +20,35 @@
 (defn log [s]
   (.log js/console (str s)))
 
-(def state (atom {:movie-list []
-                  :user-list []}))
+
+                                        ; HTML Templates
+(deftemplate input-template [name]
+  [:div.input-div
+   [:p name]
+   [:form
+    [:input.general-input {:id (str name "-input") :type "text" :name name}]]])
+
+
+(deftemplate output-template []
+  [:div.output-div
+   [:table#output-table
+    [:tr
+     [:th "Title"]
+     [:th "Year"]
+     [:th "Rating"]]]])
+
+
+(deftemplate movie-template [movie]
+  [:tr
+   [:td (movie :title)]
+   [:td (movie :year)]
+   [:td (movie :rating)]])
+
+                                        ; State
+
+(def client-state
+  (atom
+   {:movie-data []}))
 
 
 (def websocket* (atom nil))
@@ -31,11 +58,18 @@
   (.send @websocket* (str data)))
 
 
+(defn update-dom []
+  (let [output-dom (sel1 :#output-table)
+        movie-data ((deref client-state) :movie-data)]
+    (doall
+     (map #(dom/append! output-dom (movie-template %)) movie-data))))
+
+
 (defn- receive-data [raw-data]
-  (let [body (sel1 :body)
-        data (read-string raw-data)]
+  (let [data (read-string raw-data)]
     (do
-      (dom/append! body [:p (str data)]))))
+      (swap! client-state assoc :movie-data (data :movies))
+      (update-dom))))
 
 
 (defn establish-websocket []
@@ -44,7 +78,8 @@
   (doall
    (map #(aset @websocket* (first %) (second %))
         [["onopen" (fn [] (do
-                           (log "channel opened")))]
+                           (log "channel opened")
+                           (.send @websocket* {:type "query" :data []})))]
          ["onclose" (fn [] (log "channel closed"))]
          ["onerror" (fn [e] (log (str "ERROR:" e)))]
          ["onmessage" (fn [m]
@@ -56,20 +91,6 @@
                                  (.close @websocket*)
                                  (reset! websocket* nil)))
   (log "websocket loaded."))
-
-
-(deftemplate input-template [name]
-  [:div.input-div
-   [:p name]
-   [:form
-    [:input.general-input {:id (str name "-input") :type "text" :name name}]]])
-
-
-(deftemplate output-template [data]
-  [:div.output-div
-   [:table
-    [:tr
-     (map #(vector :td %) data)]]])
 
 
 (defn enable-onclick []
@@ -93,6 +114,7 @@
       (dom/append! body (input-template "title"))
       (dom/append! body (input-template "year"))
       (dom/append! body (input-template "rating"))
+      (dom/append! body (output-template))
       (dom/append! body [:button#commit-button {:type "button"} "Commit"])
       (dom/append! body [:button#establish-ws {:type "button"} "Connect"])
       (dom/append! body [:button#kill-ws {:type "button"} "Disconnect"])
