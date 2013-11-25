@@ -28,7 +28,7 @@
 (defn get-couchdb-entries [db]
   (let [raw-entries (get-all-documents db)
         entries (map #(dissoc % :_id :_rev) raw-entries)]
-    {(keyword db) entries}))
+    {(keyword db) raw-entries}))
 
 
 (defn generate-id []
@@ -40,7 +40,7 @@
 
 (defn write-to-local-db [db]
   "write all relations to db"
-  (doall (map #(put-document "movies" %) (:data (get-relation db :movie))))))
+  (doall (map #(put-document "movies" %) (:data (get-relation db :movie)))))
 
 
 (defn convert-to-datalog-entry [entry db]
@@ -83,5 +83,5 @@
     (do
       (write-to-local-db
        (db
-        (apply vector :movie :id (generate-id) movie)))
-      (get-couchdb-entries "movies"))))
+        (apply vector :movie :id (generate-id) movie))))
+    {:movies (get-all-documents "movies")}))
