@@ -24,10 +24,12 @@
   "Create datalog databases if not available"
   (map get-database ["datalog-users" "movies"]))
 
+
 (defn get-couchdb-entries [db]
   (let [raw-entries (get-all-documents db)
         entries (map #(dissoc % :_id :_rev) raw-entries)]
     {(keyword db) entries}))
+
 
 (defn generate-id []
   (let [ids (map #(:id %) (get-all-documents "movies"))]
@@ -38,8 +40,7 @@
 
 (defn write-to-local-db [db]
   "write all relations to db"
-  (let [movies (map #(put-document "movies" %) (:data (get-relation db :movie)))]
-    (count movies)))
+  (doall (map #(put-document "movies" %) (:data (get-relation db :movie))))))
 
 
 (defn convert-to-datalog-entry [entry db]
@@ -64,6 +65,7 @@
 
    (relation :movie [:id :title :year :rating])
    (index :movie :title)))
+
 
 (defn db [tuple]
   (add-tuples db-base tuple))
