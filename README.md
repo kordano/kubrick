@@ -9,12 +9,19 @@ First build clojurescript
 lein cljsbuild once
 ```
 
-Start repl of your choice, e.g. in emacs open server.clj and run within eshell :
+Start repl of your choice and run server, e.g. in emacs open server.clj and within a shell :
 
 ```
 lein repl
-(run)
-(run-ws)
+(start)
+```
+
+For live-coding in clojurescript connect to nrepl and evaluate in core.cljs:
+
+```
+(do
+  (def repl-env (reset! cemerick.austin.repls/browser-repl-env (cemerick.austin/repl-env)))
+  (cemerick.austin.repls/cljs-repl repl-env))
 ```
 
 ## License
