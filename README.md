@@ -1,6 +1,6 @@
 # kubrick
 
-Simple movie database with simple websocket experiments.
+Simple movie database with websocket experiments.
 
 ## Usage
 
