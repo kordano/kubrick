@@ -25,7 +25,8 @@
 
   :profiles {:dev {:repl-options {:init-ns kubrick.server}
                    :plugins [[lein-cljsbuild "0.3.2"]
-                             [com.cemerick/austin "0.1.1"]]
+                             [com.cemerick/austin "0.1.3"]
+                             [lein-kibit "0.0.8"]]
                    :cljsbuild {:builds [{:source-paths ["src/cljs"]
                                          :compiler {:output-to "resources/public/js/main.js"
                                                     :optimizations :simple
