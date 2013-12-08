@@ -7,7 +7,7 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [clojure.java.io :as io]
             [cheshire.core :refer :all]
-            [kubrick.datalog :as db :refer [get-couchdb-entries put!]]
+            [kubrick.datalog :as db :refer [get-couchdb-entries put! delete!]]
             [org.httpkit.server :refer [with-channel on-close on-receive run-server send!]]))
 
 
@@ -16,8 +16,11 @@
   (case type
     "get" (db/get-couchdb-entries "movies")
     "put" (db/put! data)
+    "delete" (db/delete! data)
     "WRONG REQUEST"))
 
+(let [id (-> (destructure-request {:type "get" :data []}) :movies first :_id)]
+  (destructure-request {:type "delete" :data {:movies id}}))
 
                                         ; websocket server
 (defn handler [request]
