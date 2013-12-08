@@ -1,6 +1,5 @@
 (ns kubrick.core
-  (:require [goog.net.Jsonp :as jsonp]
-            goog.net.WebSocket
+  (:require goog.net.WebSocket
             [dommy.core :as dom]
             [hiccups.runtime :as hiccupsrt]
             [cljs.reader :refer [read-string]]
@@ -20,7 +19,6 @@
 (defn log [s]
   (.log js/console (str s)))
 
-
                                         ; HTML Templates
 (deftemplate input-template [name]
   [:div.input-div
@@ -39,37 +37,41 @@
 
 
 (deftemplate movie-template [movie]
-  [:tr
+  [:tr.movie-row {:id (movie :id)}
    [:td (movie :title)]
    [:td (movie :year)]
    [:td (movie :rating)]])
 
                                         ; State
 
-(def client-state
-  (atom
-   {:movie-data []}))
-
+(def client-state (atom {:movie-data #{}}))
 
 (def websocket* (atom nil))
 
 
-(defn- send-data [data]
+(defn movie-difference [old-movies new-movies]
+  (let [old (into #{} (remove new-movies old-movies))
+        new (into #{} (remove old-movies new-movies))]
+    {:updates (filter #(contains? (into #{} (map :id old)) (% :id)) new)
+     :additions (remove #(contains? (into #{} (map :id old)) (% :id)) new)
+     :removals (remove #(contains? (into #{} (map :id new)) (% :id)) old)}))
+
+
+(defn- send! [data]
   (.send @websocket* (str data)))
 
 
-(defn update-dom []
-  (let [output-dom (sel1 :#output-table)
-        movie-data ((deref client-state) :movie-data)]
-    (doall
-     (map #(dom/append! output-dom (movie-template %)) movie-data))))
+(defn update! [data]
+  (let [new-data (into #{} (data :movies))
+        current-data ((deref client-state) :movie-data)
+        differences (movie-difference current-data new-data)
+        output-table (sel1 :#output-table)]
+    (swap! client-state assoc :movie-data new-data)
+    (log differences)))
 
 
-(defn- receive-data [raw-data]
-  (let [data (read-string raw-data)]
-    (do
-      (swap! client-state assoc :movie-data (data :movies))
-      (update-dom))))
+(defn- take! [raw-data]
+  (update! (read-string raw-data)))
 
 
 (defn establish-websocket []
@@ -79,14 +81,14 @@
    (map #(aset @websocket* (first %) (second %))
         [["onopen" (fn [] (do
                            (log "channel opened")
-                           (.send @websocket* {:type "query" :data []})))]
+                           (.send @websocket* {:type "get" :data []})))]
          ["onclose" (fn [] (log "channel closed"))]
          ["onerror" (fn [e] (log (str "ERROR:" e)))]
          ["onmessage" (fn [m]
                         (let [data (.-data m)]
                           (do
                             (log (str "receive channel data: " (apply str data)))
-                            (receive-data data))))]]))
+                            (take! data))))]]))
   (set! (.-onclick (sel1 :#kill-ws)) (fn []
                                  (.close @websocket*)
                                  (reset! websocket* nil)))
@@ -99,7 +101,7 @@
           (fn [] (let [title (dom/value (sel1 :#title-input))
                       year (dom/value (sel1 :#year-input))
                       rating (dom/value (sel1 :#rating-input))
-                      data {:type "insertion" :data {:movie {:title title :year year :rating rating}}}
+                      data {:type "put" :data {:movie {:title title :year year :rating rating}}}
                       body (sel1 :body)]
                   (go
                     (log (str "push to channel: " (str data)))
