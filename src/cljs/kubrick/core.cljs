@@ -4,7 +4,8 @@
             [hiccups.runtime :as hiccupsrt]
             [cljs.reader :refer [read-string]]
             [clojure.browser.repl]
-            [cljs.core.async :as async :refer [chan close! put!]])
+            [clojure.set :refer [select]]
+            [cljs.core.async :as async :refer [chan close! put! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go alt!]]
                    [hiccups.core :as hiccups]
                    [dommy.macros :refer [sel sel1 node deftemplate]]))
@@ -37,13 +38,14 @@
 
 
 (deftemplate movie-template [movie]
-  [:tr.movie-row {:id (movie :id)}
+  [:tr.movie-row {:id (movie :_id)}
    [:td (movie :title)]
    [:td (movie :year)]
-   [:td (movie :rating)]])
+   [:td (movie :rating)]
+   [:td [:button.movie-remove-button {:type "button"} "remove"]]])
+
 
                                         ; State
-
 (def client-state (atom {:movie-data #{}}))
 
 (def websocket* (atom nil))
@@ -66,9 +68,30 @@
         current-data ((deref client-state) :movie-data)
         differences (movie-difference current-data new-data)
         output-table (sel1 :#output-table)]
-    (swap! client-state assoc :movie-data new-data)
-    (log differences)))
+    (swap! client-state assoc :movie-data new-data :intermediate differences)
+    (log differences)
+    (doall (map (fn [entry] (->> (sel :.movie-row)
+                                (filter #(= (dom/attr % "id") (entry :_id)))
+                                first
+                                dom/remove!))
+                (differences :removals)))
+    (doall (map #(dom/append! output-table (movie-template %)) (differences :additions)))
+    ;(doall (map #(dom/replace! (sel1 (keyword (str "#" (% :_id)))) (movie-template %)) (differences :updates)))
+    (doall (map
+            (fn [button]
+              (set! (.-onclick button)
+                    (fn []
+                      (let [node-parents (apply vector (dom/ancestor-nodes button))
+                            id (dom/attr (node-parents 2) "id")]
+                        (send! {:type "delete" :data {:movies id}})))))
+            (sel :.movie-remove-button)))))
 
+
+(let [id (first (apply vector (map :_id (-> @client-state :movie-data))))]
+  )
+
+
+;(send! {:type "delete" :data {:movies id}})
 
 (defn- take! [raw-data]
   (update! (read-string raw-data)))
@@ -105,9 +128,8 @@
                       body (sel1 :body)]
                   (go
                     (log (str "push to channel: " (str data)))
-                    (.send @websocket* data)))))
-    (set! (.-onclick (sel1 :#establish-ws))
-          (fn [] (establish-websocket)))))
+                    (send! data)))))
+    (set! (.-onclick (sel1 :#establish-ws)) (fn [] (establish-websocket)))))
 
 
 (defn init []
