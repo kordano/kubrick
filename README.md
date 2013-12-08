@@ -1,6 +1,6 @@
 # kubrick
 
-Simple movie database with simple websocket experiments.
+Sample CMS with websockets and key-value store.
 
 ## Usage
 
