@@ -1,5 +1,4 @@
 # kubrick
-
 Sample CMS with websockets and key-value store.
 
 ## Usage
