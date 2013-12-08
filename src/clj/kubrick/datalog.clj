@@ -38,6 +38,10 @@
       0)))
 
 
+(defn remove-from-local-db [db id]
+  (let [document (get-document db id)]
+    (delete-document db document)))
+
 (defn write-to-local-db [db]
   "write all relations to db"
   (doall (map #(put-document "movies" %) (:data (get-relation db :movie)))))
@@ -78,6 +82,8 @@
        (:user :id ?i :name ?n))))
 
 
+;; --- gate to the outer worlds ---
+
 (defn put! [data]
   (let [movie (flatten (apply vector (data :movie)))]
     (do
@@ -85,3 +91,8 @@
        (db
         (apply vector :movie :id (generate-id) movie))))
     {:movies (get-all-documents "movies")}))
+
+(defn delete! [{id :movies}]
+  (do
+    (remove-from-local-db "movies" id))
+    {:movies (get-all-documents "movies")})
