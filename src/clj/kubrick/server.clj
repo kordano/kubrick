@@ -13,26 +13,24 @@
 
 
 (defn destructure-request [{type :type data :data}]
-  (cond
-   (= type "query") (db/get-couchdb-entries "movies")
-   (= type "insertion") (db/put! data)
-   :else "WRONG REQUEST"))
+  (case type
+    "get" (db/get-couchdb-entries "movies")
+    "put" (db/put! data)
+    "WRONG REQUEST"))
 
 
                                         ; websocket server
 (defn handler [request]
   (with-channel request channel
     (on-close channel (fn [status] (println "channel closed: " status)))
-    (on-receive channel (fn [data] ;; echo it back
+    (on-receive channel (fn [data]
                           (do
                             (println (str "data received: " (str (read-string data))))
                             (send! channel (str (destructure-request (read-string data)))))))))
 
 
-(defn run-ws []
-  (defonce ^:private ws-server
-    (run-server handler {:port 9090}))
-  ws-server)
+(def stop-ws (run-server handler {:port 9090}))
+#_(stop-ws)
 
 
                                         ; ring server
@@ -47,14 +45,4 @@
   (resources "/")
   (GET "/*" req (page)))
 
-
-(defn run []
-  (defonce ^:private server
-    (run-jetty #'site {:port 8080 :join? false}))
-  server)
-
-
-(defn start []
-  (do
-    (run)
-    (run-ws)))
+(def html-server (run-jetty #'site {:port 8080 :join? false}))
