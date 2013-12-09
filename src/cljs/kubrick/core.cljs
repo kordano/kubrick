@@ -21,14 +21,18 @@
   (.log js/console (str s)))
 
                                         ; HTML Templates
-(deftemplate input-template [name]
-  [:div.input-div
-   [:p name]
-   [:form
-    [:input.general-input {:id (str name "-input") :type "text" :name name}]]])
+(deftemplate movie-input-template []
+  [:tr#input-row
+   [td
+     [:input.general-input#title-input {:type "text" :name "title"}]]
+   [td
+     [:input.general-input#year-input {:type "text" :name "year"}]]
+   [td
+     [:input.general-input#rating-input {:type "text" :name "rating"}]]
+   [:td [:button#movie-add-button {:type "button"} "add"]]])
 
 
-(deftemplate output-template []
+(deftemplate movie-output-template []
   [:div.output-div
    [:table#output-table
     [:tr
@@ -42,7 +46,19 @@
    [:td (movie :title)]
    [:td (movie :year)]
    [:td (movie :rating)]
-   [:td [:button.movie-remove-button {:type "button"} "remove"]]])
+   [:td [:a.movie-remove-button "remove"]]])
+
+
+(defn create-ui []
+  (let [body (sel1 :body)]
+    (dom/append!
+     body
+     [:nav
+      [:ul
+       [:li [:a.nav-entry"Home"]
+        [:ul
+         [:li [:a#connect-button  "Connect"]]
+         [:li [:a#disconnect-button "Disconnect"]]]]]])))
 
 
                                         ; State
@@ -87,12 +103,6 @@
             (sel :.movie-remove-button)))))
 
 
-(let [id (first (apply vector (map :_id (-> @client-state :movie-data))))]
-  )
-
-
-;(send! {:type "delete" :data {:movies id}})
-
 (defn- take! [raw-data]
   (update! (read-string raw-data)))
 
@@ -112,7 +122,7 @@
                           (do
                             (log (str "receive channel data: " (apply str data)))
                             (take! data))))]]))
-  (set! (.-onclick (sel1 :#kill-ws)) (fn []
+  (set! (.-onclick (sel1 :#disconnect-button)) (fn []
                                  (.close @websocket*)
                                  (reset! websocket* nil)))
   (log "websocket loaded."))
@@ -120,7 +130,7 @@
 
 (defn enable-onclick []
   (do
-    (set! (.-onclick (sel1 :#commit-button))
+    (set! (.-onclick (sel1 :#movie-add-button))
           (fn [] (let [title (dom/value (sel1 :#title-input))
                       year (dom/value (sel1 :#year-input))
                       rating (dom/value (sel1 :#rating-input))
@@ -129,19 +139,15 @@
                   (go
                     (log (str "push to channel: " (str data)))
                     (send! data)))))
-    (set! (.-onclick (sel1 :#establish-ws)) (fn [] (establish-websocket)))))
+    (set! (.-onclick (sel1 :#connect-button)) (fn [] (establish-websocket)))))
 
 
 (defn init []
   (let [body (sel1 :body)]
     (do
-      (dom/append! body (input-template "title"))
-      (dom/append! body (input-template "year"))
-      (dom/append! body (input-template "rating"))
-      (dom/append! body (output-template))
-      (dom/append! body [:button#commit-button {:type "button"} "Commit"])
-      (dom/append! body [:button#establish-ws {:type "button"} "Connect"])
-      (dom/append! body [:button#kill-ws {:type "button"} "Disconnect"])
+      (create-ui)
+      (dom/append! body (movie-output-template))
+      (dom/append! (sel1 :#output-table) (movie-input-template))
       (enable-onclick))))
 
 (set! (.-onload js/window) init)
