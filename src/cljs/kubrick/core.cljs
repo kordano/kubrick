@@ -29,7 +29,7 @@
      [:input.general-input {:id "year-input" :type "text" :name "year"}]]
    [td
      [:input.general-input {:id "rating-input" :type "text" :name "rating"}]]
-   [:td [:button#movie-add-button {:type "button"} "add"]]])
+   [:td [:a#movie-add-button "add"]]])
 
 
 (deftemplate movie-output-template []
@@ -128,10 +128,8 @@
   (log "websocket loaded."))
 
 
-(defn enable-onclick []
-  (do
-    (set! (.-onclick (sel1 :#movie-add-button))
-          (fn [] (let [title (dom/value (sel1 :#title-input))
+(defn send-movie! []
+  (let [title (dom/value (sel1 :#title-input))
                       year (dom/value (sel1 :#year-input))
                       rating (dom/value (sel1 :#rating-input))
                       data {:type "put" :data {:movie {:title title :year year :rating rating}}}
@@ -140,10 +138,17 @@
                     (log (str "push to channel: " (str data)))
                     (send! data)
                     (doseq [input-field (sel :.general-input)]
-                      (dom/set-value! input-field ""))))))
-    (set! (.-onclick (sel1 :#connect-button)) (fn [] (establish-websocket)))))
+                      (dom/set-value! input-field "")))))
 
-(sel :.general-input)
+
+(defn enable-onclick []
+  (do
+    (set! (.-onclick (sel1 :#movie-add-button))
+          (fn [] (send-movie!)))
+    (doseq [input-field (sel :.general-input)]
+      (set! (.-onkeypress input-field)
+            (fn [e] (if (= (.-keyCode e) 13) (send-movie!)))))
+    (set! (.-onclick (sel1 :#connect-button)) (fn [] (establish-websocket)))))
 
 (defn init []
   (let [body (sel1 :body)]
