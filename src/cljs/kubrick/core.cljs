@@ -24,11 +24,11 @@
 (deftemplate movie-input-template []
   [:tr#input-row
    [td
-     [:input.general-input#title-input {:type "text" :name "title"}]]
+     [:input.general-input {:id "title-input" :type "text" :name "title"}]]
    [td
-     [:input.general-input#year-input {:type "text" :name "year"}]]
+     [:input.general-input {:id "year-input" :type "text" :name "year"}]]
    [td
-     [:input.general-input#rating-input {:type "text" :name "rating"}]]
+     [:input.general-input {:id "rating-input" :type "text" :name "rating"}]]
    [:td [:button#movie-add-button {:type "button"} "add"]]])
 
 
@@ -138,9 +138,12 @@
                       body (sel1 :body)]
                   (go
                     (log (str "push to channel: " (str data)))
-                    (send! data)))))
+                    (send! data)
+                    (doseq [input-field (sel :.general-input)]
+                      (dom/set-value! input-field ""))))))
     (set! (.-onclick (sel1 :#connect-button)) (fn [] (establish-websocket)))))
 
+(sel :.general-input)
 
 (defn init []
   (let [body (sel1 :body)]
