@@ -95,42 +95,26 @@ nav ul li ul li a:active{
 
 #output-table {
     vertical-align : center;
+    -webkit-font-smoothin: antialiased;
+    whitespace: nowrap;
 }
 
 
 /* buttons */
-.movie-remove-button {
+.movie-remove-button, #movie-add-button {
     position: relative;
     text-align: center;
     font-size: 65%;
-    vertical-align: top;
     background: #202035;
     color: #7070AA;
     -webkit-font-smoothin: antialiased;
     whitespace: nowrap;
     cursor: pointer;
+    margin-left: 10px;
 }
 
-
-#movie-add-button {
-    position: relative;
-    text-align: center;
-    font-size: 75%;
-    vertical-align: top;
-    padding: 3px 10px;
-    background: #202035;
-    color: #7070AA;
-    -webkit-font-smoothin: antialiased;
-    whitespace: nowrap;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    border-radius: 2px;
-    border: 2px solid #7070AA;
-    cursor: pointer;
-}
 
 .movie-remove-button:hover, #movie-add-button:hover {
-    border-color: #50afde;
     color: #50afde;
     border-bottom: 2px solid #50afde;
 }
@@ -144,6 +128,7 @@ input {
     border-radius: 3px;
     border: 2px solid #7070AA;
     text-align: center;
+    width: 100%;
 }
 
 /* output-row*/
