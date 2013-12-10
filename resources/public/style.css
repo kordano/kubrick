@@ -21,6 +21,19 @@ nav {
 .nav-entry:hover {
    color: #ffffff;
 }
+
+#notification-area {
+    position: absolute;
+    text-align: center;
+    display: block;
+    margin-left: 30%;
+    font-size: 15px;
+    color: #50afde;
+    transition: background 0.5s ease-out; /* explorer 10 */
+    -webkit-transition: background 0.5s ease-out; /* chrome & safari */
+    -moz-transition: background 0.5 ease-out; /* firefox */
+    -o-transition: background 0.5 ease-out; /* opera */
+}
 nav ul {
     padding: 0px;
     margin: 0px;
@@ -86,7 +99,6 @@ nav ul li ul li a:active{
 
 /* output window */
 .output-div {
-    width: 60%;
     padding-left: 20%;
     padding-top: 20px;
     padding-bottom: 20px;
@@ -101,7 +113,7 @@ nav ul li ul li a:active{
 
 
 /* buttons */
-.movie-remove-button, #movie-add-button {
+.movie-remove-button {
     position: relative;
     text-align: center;
     font-size: 65%;
@@ -113,8 +125,25 @@ nav ul li ul li a:active{
     margin-left: 10px;
 }
 
-
-.movie-remove-button:hover, #movie-add-button:hover {
+#movie-add-button {
+    position: relative;
+    text-align: center;
+    font-size: 75%;
+    background: #202035;
+    color: #7070AA;
+    -webkit-font-smoothin: antialiased;
+    padding: 2px 5px;
+    whitespace: nowrap;
+    cursor: pointer;
+    margin-left: 10px;
+    border: 1px solid #7070aa;
+    border-radius: 2px;
+}
+#movie-add-button:hover {
+    border-color: #50afde;
+    color: #50afde;
+}
+.movie-remove-button:hover{
     color: #50afde;
     border-bottom: 2px solid #50afde;
 }
@@ -126,9 +155,13 @@ input {
     border: 0;
     font-size: 100%;
     border-radius: 3px;
-    border: 2px solid #7070AA;
+    border: 1px solid #7070AA;
     text-align: center;
     width: 100%;
+}
+
+input:focus {
+    background: #404075;
 }
 
 /* output-row*/
