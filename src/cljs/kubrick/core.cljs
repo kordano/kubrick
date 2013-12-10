@@ -29,7 +29,7 @@
      [:input.general-input {:id "year-input" :type "text" :name "year"}]]
    [td
      [:input.general-input {:id "rating-input" :type "text" :name "rating"}]]
-   [:td [:a#movie-add-button "add"]]])
+   [:td [:a#movie-add-button "+ Add Movie"]]])
 
 
 (deftemplate movie-output-template []
@@ -49,7 +49,7 @@
    [:td [:a.movie-remove-button "remove"]]])
 
 
-(defn create-ui []
+(defn create-nav []
   (let [body (sel1 :body)]
     (dom/append!
      body
@@ -58,7 +58,8 @@
        [:li [:a.nav-entry"Home"]
         [:ul
          [:li [:a#connect-button  "Connect"]]
-         [:li [:a#disconnect-button "Disconnect"]]]]]])))
+         [:li [:a#disconnect-button "Disconnect"]]]]]
+      [:a#notification-area " "]])))
 
 
                                         ; State
@@ -66,8 +67,15 @@
 
 (def websocket* (atom nil))
 
+(defn notify! [message]
+  (go
+    (log message)
+    (dom/set-text! (sel1 :#notification-area) message)
+    (<! (timeout 5000))
+    (dom/set-text! (sel1 :#notification-area) "")))
 
-(defn movie-difference [old-movies new-movies]
+
+(defn movie-delta [old-movies new-movies]
   (let [old (into #{} (remove new-movies old-movies))
         new (into #{} (remove old-movies new-movies))]
     {:updates (filter #(contains? (into #{} (map :id old)) (% :id)) new)
@@ -82,7 +90,7 @@
 (defn update! [data]
   (let [new-data (into #{} (data :movies))
         current-data ((deref client-state) :movie-data)
-        differences (movie-difference current-data new-data)
+        differences (movie-delta current-data new-data)
         output-table (sel1 :#output-table)]
     (swap! client-state assoc :movie-data new-data :intermediate differences)
     (log differences)
@@ -99,7 +107,8 @@
                     (fn []
                       (let [node-parents (apply vector (dom/ancestor-nodes button))
                             id (dom/attr (node-parents 2) "id")]
-                        (send! {:type "delete" :data {:movies id}})))))
+                        (send! {:type "delete" :data {:movies id}})
+                        (notify! "Movie deleted")))))
             (sel :.movie-remove-button)))))
 
 
@@ -113,9 +122,9 @@
   (doall
    (map #(aset @websocket* (first %) (second %))
         [["onopen" (fn [] (do
-                           (log "channel opened")
+                           (notify! "channel opened")
                            (.send @websocket* {:type "get" :data []})))]
-         ["onclose" (fn [] (log "channel closed"))]
+         ["onclose" (fn [] (notify! "channel closed"))]
          ["onerror" (fn [e] (log (str "ERROR:" e)))]
          ["onmessage" (fn [m]
                         (let [data (.-data m)]
@@ -137,6 +146,7 @@
                   (go
                     (log (str "push to channel: " (str data)))
                     (send! data)
+                    (notify! "Movie added")
                     (doseq [input-field (sel :.general-input)]
                       (dom/set-value! input-field "")))))
 
@@ -153,7 +163,7 @@
 (defn init []
   (let [body (sel1 :body)]
     (do
-      (create-ui)
+      (create-nav)
       (dom/append! body (movie-output-template))
       (dom/append! (sel1 :#output-table) (movie-input-template))
       (enable-onclick))))
